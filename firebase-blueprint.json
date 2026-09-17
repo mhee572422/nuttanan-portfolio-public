@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Post",
+      "description": "A blog post or update",
+      "type": "object",
+      "properties": {
+        "title_en": { "type": "string", "maxLength": 200 },
+        "title_th": { "type": "string", "maxLength": 200 },
+        "excerpt_en": { "type": "string", "maxLength": 500 },
+        "excerpt_th": { "type": "string", "maxLength": 500 },
+        "content_en": { "type": "string", "maxLength": 50000 },
+        "content_th": { "type": "string", "maxLength": 50000 },
+        "category": { "type": "string", "enum": ["Tech", "Life", "General"] },
+        "tag": { "type": "string", "maxLength": 50 },
+        "readTime": { "type": "string", "maxLength": 20 },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "timestamp" },
+        "updatedAt": { "type": "timestamp" },
+        "authorId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["title_en", "title_th", "content_en", "content_th", "category", "tag", "readTime", "published", "createdAt", "updatedAt", "authorId"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "timestamp" },
+        "lastLoginAt": { "type": "timestamp" }
+      },
+      "required": ["email"]
+    },
+    "Analytics": {
+      "title": "Analytics",
+      "description": "Visitor analytics",
+      "type": "object",
+      "properties": {
+        "count": { "type": "number" },
+        "lastVisitedAt": { "type": "timestamp" }
+      }
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin users",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Blog posts and updates"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/analytics/visitors": {
+      "schema": { "$ref": "#/entities/Analytics" },
+      "description": "Site analytics"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Admin access list"
+    }
+  }
+}

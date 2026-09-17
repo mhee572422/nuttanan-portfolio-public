@@ -1,0 +1,10 @@
+{
+  "name": "Professional Portfolio",
+  "description": "A professional portfolio and resume website to showcase work history and projects.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

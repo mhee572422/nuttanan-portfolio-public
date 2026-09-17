@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --------------------------------------------------------------------------
+    // GLOBAL HELPERS
+    // --------------------------------------------------------------------------
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    function isAdmin() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); 
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function incoming() { 
+      return request.resource.data; 
+    }
+    function existing() { 
+      return resource.data; 
+    }
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    // --------------------------------------------------------------------------
+    // VALIDATORS
+    // --------------------------------------------------------------------------
+    function isValidPost(data) {
+      return data.title_en is string && data.title_en.size() <= 200 &&
+             data.title_th is string && data.title_th.size() <= 200 &&
+             data.excerpt_en is string && data.excerpt_en.size() <= 500 &&
+             data.excerpt_th is string && data.excerpt_th.size() <= 500 &&
+             data.content_en is string && data.content_en.size() <= 50000 &&
+             data.content_th is string && data.content_th.size() <= 50000 &&
+             data.category is string && data.category in ['Tech', 'Life', 'General'] &&
+             data.tag is string && data.tag.size() <= 50 &&
+             data.readTime is string && data.readTime.size() <= 20 &&
+             data.published is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             data.authorId is string && data.authorId == request.auth.uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAny(['email']) &&
+             data.email is string && data.email.size() <= 100;
+    }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /analytics/visitors {
+      allow read, write: if true;
+    }
+
+    match /admins/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && request.auth.token.email == 'nuttanan.f@gmail.com';
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+    }
+
+    match /posts/{postId} {
+      allow read: if (existing().published == true) || isAdmin();
+      allow list: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidId(postId) && 
+                       isValidPost(incoming()) && 
+                       incoming().createdAt == request.time &&
+                       incoming().keys().hasAll(['title_en', 'title_th', 'content_en', 'content_th', 'category', 'tag', 'readTime', 'published', 'createdAt', 'updatedAt', 'authorId']) &&
+                       incoming().keys().size() == 13;
+      allow update: if isAdmin() && isValidId(postId) && 
+                       isValidPost(incoming()) &&
+                       incoming().updatedAt == request.time &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().authorId == existing().authorId;
+      allow delete: if isAdmin() && isValidId(postId);
+    }
+  }
+}
